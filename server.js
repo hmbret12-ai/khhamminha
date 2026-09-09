@@ -366,4 +366,79 @@ app.post('/api/ai/question', async (req, res) => {
 
   const {
     history = [],
-    difficulty = '
+    difficulty = 'easy',
+    remaining = 20
+  } = req.body || {};
+
+  const safeHistory = cleanHistory(history);
+
+  const prompt = `
+أنت المخمّن في لعبة "خمّنها" العربية.
+
+المستخدم يعرف كلمة سرية وأنت لا تعرفها.
+
+مستوى الصعوبة:
+${difficulty}
+
+عدد الأسئلة المتبقية:
+${Math.max(0, Number(remaining) || 0)}
+
+إجابات صاحب الكلمة حتى الآن:
+${JSON.stringify(safeHistory, null, 2)}
+
+مهمتك اختيار أفضل خطوة تالية.
+
+القواعد:
+
+1. اسأل سؤالًا واحدًا فقط يمكن الإجابة عنه بنعم أو لا.
+2. استخدم العربية الطبيعية والواضحة.
+3. لا تكرر سؤالًا سابقًا.
+4. لا تسأل عن شيء تم حسمه بوضوح.
+5. ابدأ بالأسئلة التي تقسم الاحتمالات إلى مجموعات كبيرة.
+6. بعد تضييق الاحتمالات انتقل إلى خصائص أكثر تحديدًا.
+7. يمكنك السؤال عن النوع أو الوظيفة أو المكان أو الاستخدام أو الشكل أو المادة أو الحجم أو الحركة أو الحروف.
+8. إذا أصبحت لديك ثقة عالية، يمكنك تقديم تخمين.
+9. التخمين يجب أن يكون كلمة واحدة أو عبارة قصيرة جدًا.
+10. لا تدّع معرفة الكلمة دون أدلة كافية.
+11. أعد JSON فقط.
+
+إما:
+
+{"type":"question","text":"هل ...؟"}
+
+أو:
+
+{"type":"guess","text":"هل الكلمة هي ...؟"}
+`;
+
+  try {
+    const raw = await askModel(
+      prompt,
+      'اختر أفضل خطوة الآن وأعد JSON فقط.'
+    );
+
+    const data = parseJSON(raw);
+
+    if (
+      !data ||
+      !['question', 'guess'].includes(data.type) ||
+      !data.text
+    ) {
+      return res.status(500).json({
+        error: 'الذكاء الاصطناعي أعاد استجابة غير صالحة.'
+      });
+    }
+
+    res.json({
+      type: data.type,
+      text: String(data.text).slice(0, 300)
+    });
+
+  } catch (err) {
+    console.error('AI QUESTION ERROR:', err);
+
+    res.status(500).json({
+      error: 'تعذر الاتصال بالذكاء الاصطناعي.'
+    });
+  }
+});
