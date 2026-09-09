@@ -1,16 +1,16 @@
 {
   "name": "khamminha",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "private": true,
-  "description": "لعبة خمّنها مع ذكاء اصطناعي حقيقي",
+  "description": "لعبة خمّنها مع ذكاء اصطناعي",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js"
   },
   "dependencies": {
-    "dotenv": "latest",
+    "@google/genai": "latest",
     "express": "latest",
-    "openai": "latest"
+    "dotenv": "latest"
   }
 }
