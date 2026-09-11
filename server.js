@@ -442,3 +442,10 @@ ${JSON.stringify(safeHistory, null, 2)}
     });
   }
 });
+/* =========================
+   تشغيل الخادم
+========================= */
+
+app.listen(PORT, HOST, () => {
+  console.log(`🎮 Khamminha server running on ${HOST}:${PORT}`);
+});
