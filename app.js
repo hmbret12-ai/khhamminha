@@ -666,12 +666,26 @@ function confirmWord() {
 
       .catch(e => {
 
-        $("msg").textContent =
-          "⚠️ " + e.message;
+  const raw =
+    e.raw ||
+    e.message ||
+    "لم تصل استجابة من الذكاء الاصطناعي.";
 
-        show("game-screen");
+  $("answer-title").textContent =
+    "🤖 استجابة الذكاء الاصطناعي";
 
-      })
+  $("answer-name").textContent =
+    "Gemini";
+
+  $("asked").textContent =
+    raw;
+
+  $("msg").textContent =
+    "⚠️ تم عرض الاستجابة التي وصلت من الذكاء الاصطناعي.";
+
+  show("answer-screen");
+
+})
 
       .finally(() => {
 
