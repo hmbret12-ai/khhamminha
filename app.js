@@ -1,4 +1,15 @@
-const $ = x => document.getElementById(x);
+/* =========================================================
+   خمنها - Khamminha
+   App.js
+   ========================================================= */
+
+
+/* =========================================================
+   أدوات عامة
+   ========================================================= */
+
+const $ = (id) =>
+  document.getElementById(id);
 
 const screens = [
   "home",
@@ -14,26 +25,60 @@ const screens = [
   "match-result-screen"
 ];
 
+
+/* =========================================================
+   المتغيرات
+   ========================================================= */
+
 let mode = "";
+
 let difficulty = "easy";
+
 let word = "";
+
 let count = 0;
+
 let score = 100;
+
 let hints = 0;
+
 let current = "";
+
 let holder = "";
+
 let guesser = "";
+
 let roundScore = 0;
 
 let p1 = "";
+
 let p2 = "";
+
 let round = 1;
+
 let s1 = 0;
+
 let s2 = 0;
 
 let aiRole = "guesser";
+
+let aiQuestionIndex = 0;
+
+let aiCandidates = [];
+
+let aiAsked = [];
+
 let gameHistory = [];
+
 let aiGameId = "";
+
+/*
+   مهم:
+   نستخدم هذا لمعرفة هل سؤال AI الحالي
+   سؤال عادي أم تخمين.
+*/
+
+let currentAIType = "question";
 
 
 /* =========================================================
@@ -41,6 +86,7 @@ let aiGameId = "";
    ========================================================= */
 
 const words = {
+
   easy: [
     "هاتف",
     "كتاب",
@@ -85,11 +131,12 @@ const words = {
     "منظار",
     "سفينة"
   ]
+
 };
 
 
 /* =========================================================
-   معلومات الكلمات في الوضع دون اتصال
+   معلومات الكلمات
    ========================================================= */
 
 const facts = {
@@ -522,38 +569,55 @@ const facts = {
     indoors: 1,
     metal: 0
   }
+
 };
 
 
 /* =========================================================
-   التنقل
+   Navigation
    ========================================================= */
 
 function show(id) {
-  screens.forEach(x => {
-    const el = $(x);
-    if (el) {
-      el.style.display = x === id ? "block" : "none";
+
+  screens.forEach(
+    (x) => {
+
+      const element = $(x);
+
+      if (!element) return;
+
+      element.style.display =
+        x === id
+          ? "block"
+          : "none";
+
     }
-  });
+  );
 }
+
 
 function goHome() {
   show("home");
 }
 
+
 function comingSoon(x) {
-  alert("🚧 " + x + " ستكون متاحة قريبًا.");
+  alert(
+    "🚧 " +
+    x +
+    " ستكون متاحة قريبًا."
+  );
 }
+
+
+/* =========================================================
+   AI Difficulty
+   ========================================================= */
 
 function showDifficulty() {
   show("difficulty-screen");
 }
 
-
-/* =========================================================
-   اختيار الصعوبة
-   ========================================================= */
 
 function chooseAIMode(level) {
 
@@ -566,7 +630,8 @@ function chooseAIMode(level) {
   };
 
   $("ai-mode-desc").textContent =
-    "الصعوبة: " + names[level] +
+    "الصعوبة: " +
+    names[level] +
     ". اختر هل تريد التخمين أم اختيار الكلمة.";
 
   show("ai-mode-screen");
@@ -574,22 +639,19 @@ function chooseAIMode(level) {
 
 
 /* =========================================================
-   بدء وضع الذكاء الاصطناعي
+   Start AI
    ========================================================= */
 
 async function startAI(role) {
 
   aiRole = role;
 
-  /* -----------------------------------------
-     المستخدم هو المخمّن
-     ----------------------------------------- */
-
   if (role === "guesser") {
 
     mode = "ai";
 
     holder = "الذكاء الاصطناعي";
+
     guesser = "أنت";
 
     reset();
@@ -606,14 +668,16 @@ async function startAI(role) {
 
     try {
 
-      const data = await api(
-        "/api/ai/start",
-        {
-          difficulty: difficulty
-        }
-      );
+      const data =
+        await api(
+          "/api/ai/start",
+          {
+            difficulty
+          }
+        );
 
-      aiGameId = data.gameId;
+      aiGameId =
+        data.gameId;
 
       if (!aiGameId) {
         throw new Error(
@@ -624,44 +688,49 @@ async function startAI(role) {
     } catch (e) {
 
       $("msg").textContent =
-        "⚠️ " + e.message;
+        "⚠️ " +
+        e.message;
 
     } finally {
 
       setLoading(false);
+
     }
 
-    return;
   }
 
+  else {
 
-  /* -----------------------------------------
-     المستخدم صاحب الكلمة
-     ----------------------------------------- */
+    mode = "ai-holder";
 
-  mode = "ai-holder";
+    holder = "أنت";
 
-  holder = "أنت";
-  guesser = "الذكاء الاصطناعي";
+    guesser = "الذكاء الاصطناعي";
 
-  $("word-owner").textContent =
-    "اختر كلمة مناسبة لمستوى " +
-    ({
+    show("word-screen");
+
+    const names = {
       easy: "السهل",
       medium: "المتوسط",
       hard: "الصعب"
-    }[difficulty]) +
-    ". بعد التأكيد سيبدأ الذكاء الاصطناعي بالتخمين.";
+    };
 
-  $("word-input").value = "";
-  $("word-warning").textContent = "";
+    $("word-owner").textContent =
+      "اختر كلمة مناسبة لمستوى " +
+      names[difficulty] +
+      ". بعد التأكيد سيبدأ الذكاء الاصطناعي بالتخمين.";
 
-  show("word-screen");
+    $("word-input").value = "";
+
+    $("word-warning").textContent = "";
+
+  }
+
 }
 
 
 /* =========================================================
-   الوضع دون اتصال
+   Offline
    ========================================================= */
 
 function startOfflineGame() {
@@ -673,6 +742,7 @@ function startOfflineGame() {
   word = random("easy");
 
   holder = "النظام";
+
   guesser = "أنت";
 
   reset();
@@ -685,17 +755,21 @@ function startOfflineGame() {
 
 
 /* =========================================================
-   اللاعبان
+   Local Multiplayer
    ========================================================= */
 
 function startLocalGame() {
   show("local-setup-screen");
 }
 
+
 function startLocalMatch() {
 
-  const a = $("p1").value.trim();
-  const b = $("p2").value.trim();
+  const a =
+    $("p1").value.trim();
+
+  const b =
+    $("p2").value.trim();
 
   if (!a || !b) {
 
@@ -714,32 +788,51 @@ function startLocalMatch() {
   }
 
   p1 = a;
+
   p2 = b;
 
   round = 1;
+
   s1 = 0;
+
   s2 = 0;
 
   localRound();
 }
 
+
 function localRound() {
 
-  holder = round % 2 ? p1 : p2;
-  guesser = round % 2 ? p2 : p1;
+  holder =
+    round % 2
+      ? p1
+      : p2;
+
+  guesser =
+    round % 2
+      ? p2
+      : p1;
 
   $("round-title").textContent =
-    "الجولة " + round + " من 5";
+    "الجولة " +
+    round +
+    " من 5";
 
   $("round-role").textContent =
-    "صاحب الكلمة: " + holder;
+    "صاحب الكلمة: " +
+    holder;
 
   $("round-info").innerHTML =
-    "👤 " + holder + " يختار الكلمة<br>" +
-    "🎯 " + guesser + " يخمّن";
+    "👤 " +
+    holder +
+    " يختار الكلمة<br>" +
+    "🎯 " +
+    guesser +
+    " يخمّن";
 
   show("local-round-screen");
 }
+
 
 function startLocalRound() {
 
@@ -757,45 +850,62 @@ function startLocalRound() {
 
 
 /* =========================================================
-   إعادة ضبط الجولة
+   Reset
    ========================================================= */
 
 function reset() {
 
   count = 0;
+
   score = 100;
+
   hints = 0;
+
   roundScore = 0;
 
   current = "";
 
+  currentAIType = "question";
+
+  aiQuestionIndex = 0;
+
+  aiAsked = [];
+
+  aiCandidates =
+    Object.keys(facts);
+
   gameHistory = [];
 
   $("qnum").textContent = "0";
+
   $("points").textContent = "100";
 
   $("question").value = "";
+
   $("guess").value = "";
 
   $("msg").textContent = "";
 
-  $("guessbox").classList.add("hidden");
+  $("guessbox").classList.add(
+    "hidden"
+  );
 
   $("history").innerHTML =
     "<p>لا توجد أسئلة بعد.</p>";
 
-  $("asked").textContent = "";
-  $("answer-name").textContent = "";
 }
 
 
 /* =========================================================
-   تأكيد الكلمة
+   Confirm Word
    ========================================================= */
 
-async function confirmWord() {
+function confirmWord() {
 
-  const w = $("word-input").value.trim();
+  const w =
+    $("word-input")
+      .value
+      .trim();
 
   if (!w) {
 
@@ -805,7 +915,9 @@ async function confirmWord() {
     return;
   }
 
-  if (!/^[\u0600-\u06FF\s]+$/.test(w)) {
+  if (
+    !/^[\u0600-\u06FF\s]+$/.test(w)
+  ) {
 
     $("word-warning").textContent =
       "⚠️ استخدم العربية فقط.";
@@ -815,94 +927,67 @@ async function confirmWord() {
 
   word = norm(w);
 
-
-  /* -----------------------------------------
-     لاعب محلي
-     ----------------------------------------- */
-
   if (mode === "local") {
 
     $("handoff").textContent =
-      guesser + "، حان دورك.";
+      guesser +
+      "، حان دورك.";
 
     show("handoff-screen");
 
-    return;
   }
 
-
-  /* -----------------------------------------
-     AI هو المخمّن
-     ----------------------------------------- */
-
-  if (mode === "ai-holder") {
+  else if (
+    mode === "ai-holder"
+  ) {
 
     reset();
 
     $("turn").textContent =
       "الذكاء الاصطناعي هو المخمّن • أجب عن أسئلته";
 
-    /*
-      مهم:
-      لا نذهب إلى game-screen هنا.
-      الذكاء الاصطناعي هو الذي يسأل.
-    */
-
-    show("answer-screen");
-
-    $("answer-title").textContent =
-      "🤖 جاري تجهيز السؤال...";
-
-    $("answer-name").textContent =
-      "الذكاء الاصطناعي";
-
-    $("asked").textContent =
-      "انتظر لحظة...";
+    show("game-screen");
 
     setLoading(
       true,
       "🤖 الذكاء الاصطناعي يجهز أول سؤال..."
     );
 
-    try {
+    aiNextQuestion()
+      .catch(
+        (e) => {
 
-      await aiNextQuestion();
+          $("msg").textContent =
+            "⚠️ " +
+            e.message;
 
-    } catch (e) {
+        }
+      )
+      .finally(
+        () => {
 
-      $("answer-title").textContent =
-        "⚠️ تعذر بدء الجولة";
+          setLoading(false);
 
-      $("answer-name").textContent =
-        "الذكاء الاصطناعي";
+        }
+      );
 
-      $("asked").textContent =
-        e.message;
-
-    } finally {
-
-      setLoading(false);
-    }
-
-    return;
   }
 
+  else {
 
-  /* -----------------------------------------
-     وضع عادي
-     ----------------------------------------- */
+    reset();
 
-  reset();
+    $("turn").textContent =
+      "أنت المخمّن";
 
-  $("turn").textContent =
-    "أنت المخمّن";
+    show("game-screen");
 
-  show("game-screen");
+  }
 }
 
 
 /* =========================================================
-   تمرير الجهاز
+   Handoff
    ========================================================= */
 
 function finishHandoff() {
@@ -910,37 +995,46 @@ function finishHandoff() {
   show("game-screen");
 
   $("turn").textContent =
-    guesser + " المخمّن • اسأل سؤالًا بنعم أو لا";
+    guesser +
+    " المخمّن • اسأل سؤالًا بنعم أو لا";
+
 }
 
 
 /* =========================================================
-   التحقق من السؤال
+   Question Validation
    ========================================================= */
 
 function validQuestion(q) {
 
-  return q.includes("هل") ||
-         q.includes("؟");
+  return (
+    q.includes("هل") ||
+    q.includes("؟") ||
+    q.includes("?")
+  );
+
 }
 
 
 /* =========================================================
-   طرح السؤال
+   Ask
    ========================================================= */
 
 async function ask() {
 
+  const q =
+    $("question")
+      .value
+      .trim();
+
   /*
-    هذا الزر خاص بالمخمّن البشري.
-    لذلك إذا كان AI هو المخمّن نوقفه.
+     في وضع AI holder
+     لا نستخدم هذا الزر.
   */
 
   if (mode === "ai-holder") {
     return;
   }
-
-  const q = $("question").value.trim();
 
   if (count >= 20) {
 
@@ -978,24 +1072,27 @@ async function ask() {
     return;
   }
 
-
   count++;
 
-  score = points(count);
+  score =
+    points(count);
 
-  $("qnum").textContent = count;
-  $("points").textContent = score;
+  $("qnum").textContent =
+    count;
+
+  $("points").textContent =
+    score;
 
   current = q;
 
-  $("asked").textContent = q;
+  $("asked").textContent =
+    q;
 
   $("question").value = "";
 
-
-  /* -----------------------------------------
-     AI صاحب الكلمة
-     ----------------------------------------- */
+  /*
+     AI Guessing
+  */
 
   if (mode === "ai") {
 
@@ -1006,17 +1103,20 @@ async function ask() {
 
     try {
 
-      const data = await api(
-        "/api/ai/answer",
-        {
-          gameId: aiGameId,
-          question: q,
-          history: gameHistory,
-          difficulty: difficulty
-        }
-      );
+      const data =
+        await api(
+          "/api/ai/answer",
+          {
+            gameId: aiGameId,
+            question: q,
+            history: gameHistory,
+            difficulty
+          }
+        );
 
-      const a = data.answer || "لا أعرف";
+      const a =
+        data.answer ||
+        "لا أعرف";
 
       gameHistory.push({
         question: q,
@@ -1025,7 +1125,9 @@ async function ask() {
 
       add(q, a);
 
-    } catch (e) {
+    }
+
+    catch (e) {
 
       count--;
 
@@ -1034,28 +1136,36 @@ async function ask() {
           ? 100
           : points(count);
 
-      $("qnum").textContent = count;
-      $("points").textContent = score;
+      $("qnum").textContent =
+        count;
+
+      $("points").textContent =
+        score;
 
       $("msg").textContent =
-        "⚠️ " + e.message;
+        "⚠️ " +
+        e.message;
 
-    } finally {
+    }
+
+    finally {
 
       setLoading(false);
+
     }
 
     return;
   }
 
 
-  /* -----------------------------------------
-     دون اتصال
-     ----------------------------------------- */
+  /*
+     Offline
+  */
 
   if (mode === "offline") {
 
-    const a = aiAnswer(q);
+    const a =
+      aiAnswer(q);
 
     add(q, a);
 
@@ -1065,9 +1175,9 @@ async function ask() {
   }
 
 
-  /* -----------------------------------------
-     لاعب محلي
-     ----------------------------------------- */
+  /*
+     Local multiplayer
+  */
 
   $("answer-title").textContent =
     "أجب عن السؤال";
@@ -1076,11 +1186,12 @@ async function ask() {
     holder;
 
   show("answer-screen");
+
 }
 
 
 /* =========================================================
-   إجابة صاحب الكلمة
+   Answer
    ========================================================= */
 
 async function answer(a) {
@@ -1093,23 +1204,25 @@ async function answer(a) {
   });
 
 
-  /* -----------------------------------------
-     AI هو المخمّن
-     ----------------------------------------- */
+  /*
+     AI Holder
+  */
 
   if (mode === "ai-holder") {
 
     /*
-      إذا كان AI قد قدم تخمينًا نهائيًا
-      وأجاب المستخدم بنعم
+       إذا كان السؤال تخمينًا
+       وأجاب المستخدم بنعم،
+       فالذكاء الاصطناعي فاز.
     */
 
     if (
-      current.includes("هل الكلمة هي") &&
+      currentAIType === "guess" &&
       a === "نعم"
     ) {
 
-      roundScore = Math.max(0, score);
+      roundScore =
+        Math.max(0, score);
 
       finish(
         true,
@@ -1123,7 +1236,26 @@ async function answer(a) {
 
 
     /*
-      إذا انتهت الأسئلة
+       إذا كان تخمين AI خاطئًا
+    */
+
+    if (
+      currentAIType === "guess" &&
+      a !== "نعم"
+    ) {
+
+      if (count >= 20) {
+
+        finishAIHolder();
+
+        return;
+      }
+
+    }
+
+
+    /*
+       انتهت الأسئلة
     */
 
     if (count >= 20) {
@@ -1135,7 +1267,7 @@ async function answer(a) {
 
 
     /*
-      الانتقال للسؤال التالي
+       طلب السؤال التالي
     */
 
     setLoading(
@@ -1147,44 +1279,54 @@ async function answer(a) {
 
       await aiNextQuestion();
 
-    } catch (e) {
+    }
 
-      $("answer-title").textContent =
-        "⚠️ حدث خطأ";
+    catch (e) {
 
-      $("answer-name").textContent =
-        "الذكاء الاصطناعي";
-
-      $("asked").textContent =
+      $("msg").textContent =
+        "⚠️ " +
         e.message;
 
-    } finally {
+      show("game-screen");
+
+    }
+
+    finally {
 
       setLoading(false);
+
     }
 
     return;
   }
 
 
-  /* -----------------------------------------
-     اللاعب المحلي
-     ----------------------------------------- */
+  /*
+     Local
+  */
 
   show("game-screen");
+
 }
 
 
 /* =========================================================
-   إضافة السؤال إلى السجل
+   Add History
    ========================================================= */
 
 function add(q, a) {
 
-  const h = $("history");
+  const h =
+    $("history");
 
-  if (h.innerHTML.includes("لا توجد")) {
+  if (
+    h.innerHTML.includes(
+      "لا توجد"
+    )
+  ) {
+
     h.innerHTML = "";
+
   }
 
   h.innerHTML +=
@@ -1193,59 +1335,77 @@ function add(q, a) {
     Math.min(count, 20) +
     ":</b> " +
     esc(q) +
-    "<br>" +
-    "<span>الإجابة: " +
+    "<br><span>الإجابة: " +
     esc(a) +
-    "</span>" +
-    "</div>";
+    "</span></div>";
+
 }
 
 
 /* =========================================================
-   التحميل
+   Loading
    ========================================================= */
 
 function setLoading(on, text) {
 
   $("msg").textContent =
     on
-      ? (text || "🤖 جاري التفكير...")
+      ? (
+        text ||
+        "🤖 جاري التفكير..."
+      )
       : "";
 
-  $("question").disabled = on;
+  $("question").disabled =
+    on;
 
   document
     .querySelectorAll(
       ".ask-button,.guess-button,.hint-button"
     )
-    .forEach(b => {
-      b.disabled = on;
-    });
+    .forEach(
+      (b) => {
+
+        b.disabled = on;
+
+      }
+    );
+
 }
 
 
 /* =========================================================
-   الاتصال بالخادم
+   API
    ========================================================= */
 
 async function api(url, body) {
 
-  const r = await fetch(
-    url,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    }
-  );
+  const r =
+    await fetch(
+      url,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+
+        body:
+          JSON.stringify(body)
+      }
+    );
 
   let d = {};
 
   try {
-    d = await r.json();
-  } catch (_) {}
+
+    d =
+      await r.json();
+
+  }
+
+  catch (_) {}
 
   if (!r.ok) {
 
@@ -1253,53 +1413,58 @@ async function api(url, body) {
       d.error ||
       "حدث خطأ في الخادم"
     );
+
   }
 
   return d;
+
 }
 
 
 /* =========================================================
-   التخمين
+   Guess UI
    ========================================================= */
 
 function showGuess() {
 
-  /*
-    لا نسمح للمستخدم بالتخمين
-    أثناء كون AI هو المخمّن.
-  */
-
-  if (mode === "ai-holder") {
-    return;
-  }
-
-  $("guessbox").classList.remove("hidden");
+  $("guessbox")
+    .classList
+    .remove("hidden");
 
   $("guess").focus();
+
 }
+
 
 function hideGuess() {
 
-  $("guessbox").classList.add("hidden");
+  $("guessbox")
+    .classList
+    .add("hidden");
 
   $("guess").value = "";
+
 }
 
 
 /* =========================================================
-   تأكيد التخمين
+   Confirm Guess
    ========================================================= */
 
 async function confirmGuess() {
 
-  const g = norm(
-    $("guess").value.trim()
-  );
+  const g =
+    norm(
+      $("guess")
+        .value
+        .trim()
+    );
 
   if (!g) {
 
-    alert("⚠️ اكتب التخمين.");
+    alert(
+      "⚠️ اكتب التخمين."
+    );
 
     return;
   }
@@ -1323,9 +1488,9 @@ async function confirmGuess() {
   hideGuess();
 
 
-  /* -----------------------------------------
-     AI صاحب الكلمة
-     ----------------------------------------- */
+  /*
+     AI mode
+  */
 
   if (mode === "ai") {
 
@@ -1336,14 +1501,16 @@ async function confirmGuess() {
 
     try {
 
-      const data = await api(
-        "/api/ai/guess",
-        {
-          gameId: aiGameId,
-          guess: g,
-          finalAttempt: count >= 20
-        }
-      );
+      const data =
+        await api(
+          "/api/ai/guess",
+          {
+            gameId: aiGameId,
+            guess: g,
+            finalAttempt:
+              count >= 20
+          }
+        );
 
       if (data.correct) {
 
@@ -1357,7 +1524,11 @@ async function confirmGuess() {
           "»"
         );
 
-      } else if (count >= 20) {
+      }
+
+      else if (
+        count >= 20
+      ) {
 
         roundScore = 0;
 
@@ -1368,31 +1539,42 @@ async function confirmGuess() {
           "»"
         );
 
-      } else {
+      }
+
+      else {
 
         $("msg").textContent =
           "❌ تخمين خاطئ، واحتُسب كسؤال.";
+
       }
 
-    } catch (e) {
+    }
+
+    catch (e) {
 
       $("msg").textContent =
-        "⚠️ " + e.message;
+        "⚠️ " +
+        e.message;
 
-    } finally {
+    }
+
+    finally {
 
       setLoading(false);
+
     }
 
     return;
   }
 
 
-  /* -----------------------------------------
-     الوضع المحلي / دون اتصال
-     ----------------------------------------- */
+  /*
+     Local / Offline
+  */
 
-  if (g === norm(word)) {
+  if (
+    g === norm(word)
+  ) {
 
     roundScore =
       Math.max(0, score);
@@ -1404,7 +1586,11 @@ async function confirmGuess() {
       "»"
     );
 
-  } else if (count >= 20) {
+  }
+
+  else if (
+    count >= 20
+  ) {
 
     roundScore = 0;
 
@@ -1415,32 +1601,29 @@ async function confirmGuess() {
       "»"
     );
 
-  } else {
+  }
+
+  else {
 
     $("msg").textContent =
       "❌ تخمين خاطئ، واحتُسب كسؤال.";
+
   }
+
 }
 
 
 /* =========================================================
-   التلميحات
+   Hints
    ========================================================= */
 
 async function hint() {
 
-  /*
-    AI هو المخمّن:
-    التلميح ليس ضروريًا هنا
-  */
-
-  if (mode === "ai-holder") {
-    return;
-  }
-
   if (score < 10) {
 
-    alert("⚠️ لا توجد نقاط كافية.");
+    alert(
+      "⚠️ لا توجد نقاط كافية."
+    );
 
     return;
   }
@@ -1453,21 +1636,22 @@ async function hint() {
     score;
 
 
-  /* -----------------------------------------
+  /*
      AI
-     ----------------------------------------- */
+  */
 
   if (mode === "ai") {
 
     try {
 
-      const data = await api(
-        "/api/ai/hint",
-        {
-          gameId: aiGameId,
-          number: hints
-        }
-      );
+      const data =
+        await api(
+          "/api/ai/hint",
+          {
+            gameId: aiGameId,
+            number: hints
+          }
+        );
 
       alert(
         "💡 التلميح " +
@@ -1476,57 +1660,51 @@ async function hint() {
         data.hint
       );
 
-    } catch (e) {
+    }
+
+    catch (e) {
 
       score += 10;
+
       hints--;
 
       $("points").textContent =
         score;
 
       alert(
-        "⚠️ " + e.message
+        "⚠️ " +
+        e.message
       );
+
     }
 
     return;
   }
 
 
-  /* -----------------------------------------
-     الوضع المحلي
-     ----------------------------------------- */
+  /*
+     Offline / Local
+  */
 
   const clean =
     word.replace(/\s/g, "");
 
-  let h;
-
-  if (hints === 1) {
-
-    h = firstHint();
-
-  } else if (hints === 2) {
-
-    h =
-      "تبدأ بحرف «" +
-      clean[0] +
-      "».";
-
-  } else if (hints === 3) {
-
-    h =
-      "عدد أحرفها " +
-      clean.length +
-      ".";
-
-  } else {
-
-    h =
-      "تنتهي بحرف «" +
-      clean[clean.length - 1] +
-      "».";
-  }
+  const h =
+    hints === 1
+      ? firstHint()
+      : hints === 2
+        ? "تبدأ بحرف «" +
+          clean[0] +
+          "»."
+        : hints === 3
+          ? "عدد أحرفها " +
+            clean.length +
+            "."
+          : "تنتهي بحرف «" +
+            clean[
+              clean.length - 1
+            ] +
+            "».";
 
   alert(
     "💡 التلميح " +
@@ -1534,12 +1712,14 @@ async function hint() {
     ": " +
     h
   );
+
 }
 
 
 function firstHint() {
 
-  const f = getFacts(word);
+  const f =
+    getFacts(word);
 
   if (f && f.place)
     return "هي مكان.";
@@ -1554,11 +1734,12 @@ function firstHint() {
     return "هي أداة أو وسيلة تُستخدم لشيء ما.";
 
   return "هي شيء أو مفهوم معروف في الحياة اليومية.";
+
 }
 
 
 /* =========================================================
-   إنهاء الجولة
+   Finish
    ========================================================= */
 
 function finish(ok, text) {
@@ -1587,14 +1768,16 @@ function finish(ok, text) {
       s2 += roundScore;
     else
       s1 += roundScore;
+
   }
 
   show("result-screen");
+
 }
 
 
 /* =========================================================
-   الجولة التالية
+   Next
    ========================================================= */
 
 function next() {
@@ -1608,11 +1791,11 @@ function next() {
 
     localRound();
 
-    return;
   }
 
-
-  if (mode === "local") {
+  else if (
+    mode === "local"
+  ) {
 
     $("final").textContent =
       s1 === s2
@@ -1625,58 +1808,70 @@ function next() {
       "<div class='score-row'>" +
       "<span>" +
       esc(p1) +
-      "</span>" +
-      "<b>" +
+      "</span><b>" +
       s1 +
-      "</b>" +
-      "</div>" +
+      "</b></div>" +
 
       "<div class='score-row'>" +
       "<span>" +
       esc(p2) +
-      "</span>" +
-      "<b>" +
+      "</span><b>" +
       s2 +
-      "</b>" +
-      "</div>";
+      "</b></div>";
 
     show("match-result-screen");
 
-    return;
   }
 
-  goHome();
+  else {
+
+    goHome();
+
+  }
+
 }
 
 
 /* =========================================================
-   معلومات الكلمات
+   Facts
    ========================================================= */
 
 function getFacts(w) {
 
-  return facts[norm(w)] || null;
+  return (
+    facts[norm(w)] ||
+    null
+  );
+
 }
 
 
 /* =========================================================
-   إجابات الوضع دون اتصال
+   Offline AI Answer
    ========================================================= */
 
 function aiAnswer(q) {
 
-  const s = norm(q);
+  const s =
+    norm(q);
 
-  const f = getFacts(word);
+  const f =
+    getFacts(word);
 
-  if (s.includes("حيوان"))
-    return f && f.animal ? "نعم" : "لا";
+  if (
+    s.includes("حيوان")
+  )
+    return f && f.animal
+      ? "نعم"
+      : "لا";
 
   if (
     s.includes("مكان") ||
     s.includes("موقع")
   )
-    return f && f.place ? "نعم" : "لا";
+    return f && f.place
+      ? "نعم"
+      : "لا";
 
   if (
     s.includes("طعام") ||
@@ -1685,46 +1880,60 @@ function aiAnswer(q) {
     s.includes("يؤكل") ||
     s.includes("يشرب")
   )
-    return f && f.food ? "نعم" : "لا";
+    return f && f.food
+      ? "نعم"
+      : "لا";
 
   if (
     s.includes("مادي") ||
     s.includes("ملموس")
   )
-    return f && f.object ? "نعم" : "لا";
+    return f && f.object
+      ? "نعم"
+      : "لا";
 
   if (
     s.includes("اداه") ||
     s.includes("أداة")
   )
-    return f && f.tool ? "نعم" : "لا";
+    return f && f.tool
+      ? "نعم"
+      : "لا";
 
   if (
     s.includes("يستخدم") ||
     s.includes("استعمال") ||
     s.includes("يستعمل")
   )
-    return f && f.used ? "نعم" : "لا";
+    return f && f.used
+      ? "نعم"
+      : "لا";
 
   if (
     s.includes("محمول") ||
     s.includes("تحمله") ||
     s.includes("تحملها")
   )
-    return f && f.portable ? "نعم" : "لا";
+    return f && f.portable
+      ? "نعم"
+      : "لا";
 
   if (
     s.includes("داخل") ||
     s.includes("منزل") ||
     s.includes("البيت")
   )
-    return f && f.indoors ? "نعم" : "لا";
+    return f && f.indoors
+      ? "نعم"
+      : "لا";
 
   if (
     s.includes("معدن") ||
     s.includes("معدنية")
   )
-    return f && f.metal ? "نعم" : "لا";
+    return f && f.metal
+      ? "نعم"
+      : "لا";
 
   if (
     s.includes("يبدأ") ||
@@ -1732,16 +1941,21 @@ function aiAnswer(q) {
   ) {
 
     const m =
-      s.match(/حرف\s+([ء-ي])/);
+      s.match(
+        /حرف\s+([ء-ي])/
+      );
 
     if (m) {
 
-      return norm(word).startsWith(
-        norm(m[1])
-      )
+      return norm(word)
+        .startsWith(
+          norm(m[1])
+        )
         ? "نعم"
         : "لا";
+
     }
+
   }
 
   if (
@@ -1750,33 +1964,37 @@ function aiAnswer(q) {
   ) {
 
     const m =
-      s.match(/(\d+)/);
+      s.match(
+        /(\d+)/
+      );
 
     if (m) {
 
-      return word
-        .replace(/\s/g, "")
-        .length === Number(m[1])
+      return (
+        word
+          .replace(/\s/g, "")
+          .length ===
+        Number(m[1])
+      )
         ? "نعم"
         : "لا";
+
     }
+
   }
 
   return difficulty === "hard"
     ? "لا أعرف"
     : "لا";
+
 }
 
 
 /* =========================================================
-   سؤال الذكاء الاصطناعي
+   AI Question
    ========================================================= */
 
 async function aiNextQuestion() {
-
-  /*
-    إذا وصلنا إلى 20 سؤالًا
-  */
 
   if (count >= 20) {
 
@@ -1785,42 +2003,42 @@ async function aiNextQuestion() {
     return;
   }
 
-
   const remaining =
     20 - count;
 
-
-  const data = await api(
-    "/api/ai/question",
-    {
-      history: gameHistory,
-      difficulty: difficulty,
-      remaining: remaining
-    }
-  );
-
+  const data =
+    await api(
+      "/api/ai/question",
+      {
+        history:
+          gameHistory,
+        difficulty,
+        remaining
+      }
+    );
 
   const text =
-    String(data.text || "").trim();
-
+    String(
+      data.text || ""
+    ).trim();
 
   if (!text) {
 
     throw new Error(
       "لم يصل سؤال من الذكاء الاصطناعي."
     );
+
   }
 
-
   /*
-    التأكد من نوع الاستجابة
+     مهم جدًا:
+     حفظ نوع السؤال.
   */
 
-  const type =
+  currentAIType =
     data.type === "guess"
       ? "guess"
       : "question";
-
 
   count++;
 
@@ -1839,33 +2057,20 @@ async function aiNextQuestion() {
     text;
 
   $("answer-name").textContent =
-    "الذكاء الاصطناعي";
+    "أنت";
 
-
-  if (type === "guess") {
-
-    $("answer-title").textContent =
-      "🤖 تخمين الذكاء الاصطناعي";
-
-  } else {
-
-    $("answer-title").textContent =
-      "أجب عن سؤال الذكاء الاصطناعي";
-  }
-
-
-  /*
-    أهم نقطة:
-    نعرض answer-screen دائمًا هنا.
-    لا نعرض game-screen.
-  */
+  $("answer-title").textContent =
+    currentAIType === "guess"
+      ? "🎯 تخمين الذكاء الاصطناعي"
+      : "🧠 أجب عن سؤال الذكاء الاصطناعي";
 
   show("answer-screen");
+
 }
 
 
 /* =========================================================
-   فشل AI بعد 20 سؤال
+   AI Holder Finish
    ========================================================= */
 
 function finishAIHolder() {
@@ -1878,24 +2083,32 @@ function finishAIHolder() {
     word +
     "»"
   );
+
 }
 
 
 /* =========================================================
-   أدوات
+   Random
    ========================================================= */
 
-function random(l) {
+function random(level) {
 
-  const a = words[l];
+  const a =
+    words[level];
 
   return a[
     Math.floor(
-      Math.random() * a.length
+      Math.random() *
+      a.length
     )
   ];
+
 }
 
+
+/* =========================================================
+   Points
+   ========================================================= */
 
 function points(n) {
 
@@ -1909,32 +2122,70 @@ function points(n) {
     return 50;
 
   return 25;
+
 }
 
+
+/* =========================================================
+   Normalize Arabic
+   ========================================================= */
 
 function norm(s) {
 
   return String(s)
-    .replace(/[أإآ]/g, "ا")
-    .replace(/ى/g, "ي")
-    .replace(/ة/g, "ه")
-    .replace(/ؤ/g, "و")
-    .replace(/ئ/g, "ي")
-    .replace(/\s+/g, " ")
+
+    .replace(
+      /[أإآ]/g,
+      "ا"
+    )
+
+    .replace(
+      /ى/g,
+      "ي"
+    )
+
+    .replace(
+      /ة/g,
+      "ه"
+    )
+
+    .replace(
+      /ؤ/g,
+      "و"
+    )
+
+    .replace(
+      /ئ/g,
+      "ي"
+    )
+
+    .replace(
+      /\s+/g,
+      " "
+    )
+
     .trim()
+
     .toLowerCase();
+
 }
 
 
+/* =========================================================
+   Escape HTML
+   ========================================================= */
+
 function esc(s) {
 
-  return String(s).replace(
-    /[&<>"]/g,
-    c => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;"
-    }[c])
-  );
-    }
+  return String(s)
+    .replace(
+      /[&<>\"]/g,
+      (c) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;"
+      }[c])
+    );
+
+}
