@@ -1,28 +1,772 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>خمّنها</title><link rel="stylesheet" href="style.css"></head><body>
-<main id="home" class="home"><div class="logo"><div class="logo-icon">؟</div><h1>خمّنها</h1><p>هل تستطيع معرفة الكلمة؟ 🎯</p></div><div class="menu">
-<button class="menu-button" onclick="showDifficulty()">🤖<div><b>الذكاء الاصطناعي</b><small>سهل • متوسط • صعب</small></div></button>
-<button class="menu-button" onclick="startLocalGame()">👥<div><b>لاعبان على نفس الجهاز</b><small>5 جولات</small></div></button>
-<button class="menu-button" onclick="comingSoon('Wi-Fi')">📡<div><b>غرفة محلية / Wi-Fi</b><small>قريبًا</small></div></button>
-<button class="menu-button" onclick="comingSoon('اللعب أونلاين')">🌐<div><b>اللعب أونلاين</b><small>قريبًا</small></div></button>
-<button class="menu-button" onclick="startOfflineGame()">📴<div><b>اللعب دون اتصال</b><small>يعمل بالكامل دون إنترنت</small></div></button></div><button class="settings-button" onclick="alert('الإعدادات ستُضاف لاحقًا ⚙️')">⚙️ الإعدادات</button><footer>خمّنها © 2026</footer></main>
+<!doctype html>
+<html lang="ar" dir="rtl">
 
-<section id="difficulty-screen" class="screen"><button class="back-button" onclick="goHome()">← العودة</button><div class="screen-title">🤖<h2>اختر الصعوبة</h2><p>الذكاء الاصطناعي سيختار الكلمة ويجيب عن أسئلتك.</p></div><div class="difficulty-list">
-<button class="difficulty" onclick="chooseAIMode('easy')">🌱 <div><b>سهل</b><small>اختر طريقة اللعب</small></div></button><button class="difficulty" onclick="chooseAIMode('medium')">⚡ <div><b>متوسط</b><small>اختر طريقة اللعب</small></div></button><button class="difficulty" onclick="chooseAIMode('hard')">🔥 <div><b>صعب</b><small>اختر طريقة اللعب</small></div></button></div></section>
+<head>
 
-<section id="ai-mode-screen" class="screen"><button class="back-button" onclick="showDifficulty()">← العودة</button><div class="screen-title">🎮<h2>طريقة اللعب</h2><p id="ai-mode-desc"></p></div><div class="difficulty-list"><button class="difficulty" onclick="startAI('guesser')">🎯 <div><b>أنت المخمّن</b><small>الذكاء الاصطناعي يختار الكلمة ويجيب عن أسئلتك</small></div></button><button class="difficulty" onclick="startAI('holder')">🧠 <div><b>أنت صاحب الكلمة</b><small>أنت تختار الكلمة والذكاء الاصطناعي يحاول تخمينها</small></div></button></div></section>
+  <meta charset="utf-8">
 
-<section id="local-setup-screen" class="screen"><button class="back-button" onclick="goHome()">← العودة</button><div class="screen-title">👥<h2>لاعبان على نفس الجهاز</h2><p>أدخل اسمي اللاعبين.</p></div><div class="input-card"><label>اللاعب الأول</label><input id="p1" maxlength="20" placeholder="أحمد"></div><div class="input-card"><label>اللاعب الثاني</label><input id="p2" maxlength="20" placeholder="محمد"></div><div id="local-warning" class="message"></div><button class="start-button" onclick="startLocalMatch()">🎮 بدء المباراة</button></section>
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  >
 
-<section id="local-round-screen" class="screen"><div class="screen-title">🎯<h2 id="round-title"></h2><p id="round-role"></p></div><div class="info-card" id="round-info"></div><button class="start-button" onclick="startLocalRound()">▶️ بدء الجولة</button></section>
+  <title>خمّنها</title>
 
-<section id="word-screen" class="screen"><div class="screen-title">📝<h2>اختيار الكلمة</h2><p id="word-owner"></p></div><div class="input-card"><label>الكلمة</label><input id="word-input" maxlength="40" placeholder="اكتب كلمة عربية..."></div><div id="word-warning" class="message"></div><button class="start-button" onclick="confirmWord()">🔒 تأكيد الكلمة</button></section>
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
 
-<section id="handoff-screen" class="screen"><div class="screen-title">🔒<h2>مرّر الجهاز</h2><p id="handoff"></p></div><div class="info-card">الكلمة لن تظهر هنا. مرّر الجهاز إلى المخمّن.</div><button class="start-button" onclick="finishHandoff()">✅ أنا جاهز</button></section>
+</head>
 
-<section id="game-screen" class="screen"><div class="game-header"><div>السؤال<strong><span id="qnum">0</span>/20</strong></div><div>النقاط<strong id="points">100</strong></div></div><div class="screen-title">❓<h2>خمّن الكلمة</h2><p id="turn"></p></div><div class="input-card"><label>السؤال</label><textarea id="question" rows="3" placeholder="هل هي شيء مادي؟"></textarea></div><div id="msg" class="message"></div><div class="game-buttons"><button class="ask-button" onclick="ask()">❓ طرح السؤال</button><button class="guess-button" onclick="showGuess()">🎯 تخمين</button><button class="hint-button" onclick="hint()">💡 تلميح (-10)</button></div><div id="guessbox" class="guess-box hidden"><input id="guess" placeholder="اكتب التخمين"><div class="guess-actions"><button class="confirm-guess" onclick="confirmGuess()">✅ تأكيد</button><button class="cancel-guess" onclick="hideGuess()">إلغاء</button></div></div><div class="history"><h3>📜 السجل</h3><div id="history"><p>لا توجد أسئلة بعد.</p></div></div></section>
+<body>
 
-<section id="answer-screen" class="screen"><div class="screen-title">🗣️<h2 id="answer-title">أجب عن السؤال</h2><p id="answer-name"></p></div><div class="asked-question"><span>السؤال:</span><p id="asked"></p></div><div class="answer-buttons"><button class="answer-button" onclick="answer('نعم')">✅<b>نعم</b></button><button class="answer-button" onclick="answer('لا')">❌<b>لا</b></button><button class="answer-button" onclick="answer('قد تكون')">🤔<b>قد تكون</b></button><button class="answer-button" onclick="answer('لا أعرف')">❓<b>لا أعرف</b></button></div></section>
+<main id="home" class="home">
 
-<section id="result-screen" class="screen"><div class="screen-title">🏆<h2 id="result-title"></h2><p id="result-text"></p></div><div class="result-card"><div>النقاط <b id="rs">0</b></div><div>الأسئلة <b id="rq">0</b></div><div>التلميحات <b id="rh">0</b></div></div><button class="start-button" onclick="next()">➡️ متابعة</button></section>
-<section id="match-result-screen" class="screen"><div class="screen-title">🏆<h2>نهاية المباراة</h2><p id="final"></p></div><div id="board" class="scoreboard"></div><button class="start-button" onclick="goHome()">🏠 الرئيسية</button></section>
-<script src="app.js"></script></body></html>
+  <div class="logo">
+
+    <div class="logo-icon">؟</div>
+
+    <h1>خمّنها</h1>
+
+    <p>هل تستطيع معرفة الكلمة؟ 🎯</p>
+
+  </div>
+
+
+  <div class="menu">
+
+    <button
+      class="menu-button"
+      onclick="showDifficulty()"
+    >
+
+      🤖
+
+      <div>
+        <b>الذكاء الاصطناعي</b>
+        <small>سهل • متوسط • صعب</small>
+      </div>
+
+    </button>
+
+
+    <button
+      class="menu-button"
+      onclick="startLocalGame()"
+    >
+
+      👥
+
+      <div>
+        <b>لاعبان على نفس الجهاز</b>
+        <small>5 جولات</small>
+      </div>
+
+    </button>
+
+
+    <button
+      class="menu-button"
+      onclick="comingSoon('Wi-Fi')"
+    >
+
+      📡
+
+      <div>
+        <b>غرفة محلية / Wi-Fi</b>
+        <small>قريبًا</small>
+      </div>
+
+    </button>
+
+
+    <button
+      class="menu-button"
+      onclick="comingSoon('اللعب أونلاين')"
+    >
+
+      🌐
+
+      <div>
+        <b>اللعب أونلاين</b>
+        <small>قريبًا</small>
+      </div>
+
+    </button>
+
+
+    <button
+      class="menu-button"
+      onclick="startOfflineGame()"
+    >
+
+      📴
+
+      <div>
+        <b>اللعب دون اتصال</b>
+        <small>يعمل بالكامل دون إنترنت</small>
+      </div>
+
+    </button>
+
+  </div>
+
+
+  <button
+    class="settings-button"
+    onclick="alert('الإعدادات ستُضاف لاحقًا ⚙️')"
+  >
+    ⚙️ الإعدادات
+  </button>
+
+
+  <footer>
+    خمّنها © 2026
+  </footer>
+
+</main>
+
+
+<!-- =====================================================
+     شاشة الصعوبة
+===================================================== -->
+
+<section
+  id="difficulty-screen"
+  class="screen"
+>
+
+  <button
+    class="back-button"
+    onclick="goHome()"
+  >
+    ← العودة
+  </button>
+
+
+  <div class="screen-title">
+
+    🤖
+
+    <h2>اختر الصعوبة</h2>
+
+    <p>
+      اختر مستوى صعوبة الذكاء الاصطناعي.
+    </p>
+
+  </div>
+
+
+  <div class="difficulty-list">
+
+    <button
+      class="difficulty"
+      onclick="chooseAIMode('easy')"
+    >
+
+      🌱
+
+      <div>
+        <b>سهل</b>
+        <small>اختر طريقة اللعب</small>
+      </div>
+
+    </button>
+
+
+    <button
+      class="difficulty"
+      onclick="chooseAIMode('medium')"
+    >
+
+      ⚡
+
+      <div>
+        <b>متوسط</b>
+        <small>اختر طريقة اللعب</small>
+      </div>
+
+    </button>
+
+
+    <button
+      class="difficulty"
+      onclick="chooseAIMode('hard')"
+    >
+
+      🔥
+
+      <div>
+        <b>صعب</b>
+        <small>اختر طريقة اللعب</small>
+      </div>
+
+    </button>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     طريقة لعب AI
+===================================================== -->
+
+<section
+  id="ai-mode-screen"
+  class="screen"
+>
+
+  <button
+    class="back-button"
+    onclick="showDifficulty()"
+  >
+    ← العودة
+  </button>
+
+
+  <div class="screen-title">
+
+    🎮
+
+    <h2>طريقة اللعب</h2>
+
+    <p id="ai-mode-desc"></p>
+
+  </div>
+
+
+  <div class="difficulty-list">
+
+    <button
+      class="difficulty"
+      onclick="startAI('guesser')"
+    >
+
+      🎯
+
+      <div>
+
+        <b>أنت المخمّن</b>
+
+        <small>
+          الذكاء الاصطناعي يختار الكلمة ويجيب عن أسئلتك
+        </small>
+
+      </div>
+
+    </button>
+
+
+    <button
+      class="difficulty"
+      onclick="startAI('holder')"
+    >
+
+      🧠
+
+      <div>
+
+        <b>أنت صاحب الكلمة</b>
+
+        <small>
+          أنت تختار الكلمة والذكاء الاصطناعي يحاول تخمينها
+        </small>
+
+      </div>
+
+    </button>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     إعداد اللاعبين
+===================================================== -->
+
+<section
+  id="local-setup-screen"
+  class="screen"
+>
+
+  <button
+    class="back-button"
+    onclick="goHome()"
+  >
+    ← العودة
+  </button>
+
+
+  <div class="screen-title">
+
+    👥
+
+    <h2>لاعبان على نفس الجهاز</h2>
+
+    <p>أدخل اسمي اللاعبين.</p>
+
+  </div>
+
+
+  <div class="input-card">
+
+    <label>اللاعب الأول</label>
+
+    <input
+      id="p1"
+      maxlength="20"
+      placeholder="أحمد"
+    >
+
+  </div>
+
+
+  <div class="input-card">
+
+    <label>اللاعب الثاني</label>
+
+    <input
+      id="p2"
+      maxlength="20"
+      placeholder="محمد"
+    >
+
+  </div>
+
+
+  <div
+    id="local-warning"
+    class="message"
+  ></div>
+
+
+  <button
+    class="start-button"
+    onclick="startLocalMatch()"
+  >
+    🎮 بدء المباراة
+  </button>
+
+</section>
+
+
+<!-- =====================================================
+     الجولة المحلية
+===================================================== -->
+
+<section
+  id="local-round-screen"
+  class="screen"
+>
+
+  <div class="screen-title">
+
+    🎯
+
+    <h2 id="round-title"></h2>
+
+    <p id="round-role"></p>
+
+  </div>
+
+
+  <div
+    class="info-card"
+    id="round-info"
+  ></div>
+
+
+  <button
+    class="start-button"
+    onclick="startLocalRound()"
+  >
+    ▶️ بدء الجولة
+  </button>
+
+</section>
+
+
+<!-- =====================================================
+     اختيار الكلمة
+===================================================== -->
+
+<section
+  id="word-screen"
+  class="screen"
+>
+
+  <div class="screen-title">
+
+    📝
+
+    <h2>اختيار الكلمة</h2>
+
+    <p id="word-owner"></p>
+
+  </div>
+
+
+  <div class="input-card">
+
+    <label>الكلمة</label>
+
+    <input
+      id="word-input"
+      maxlength="40"
+      placeholder="اكتب كلمة عربية..."
+    >
+
+  </div>
+
+
+  <div
+    id="word-warning"
+    class="message"
+  ></div>
+
+
+  <button
+    class="start-button"
+    onclick="confirmWord()"
+  >
+    🔒 تأكيد الكلمة
+  </button>
+
+</section>
+
+
+<!-- =====================================================
+     تمرير الجهاز
+===================================================== -->
+
+<section
+  id="handoff-screen"
+  class="screen"
+>
+
+  <div class="screen-title">
+
+    🔒
+
+    <h2>مرّر الجهاز</h2>
+
+    <p id="handoff"></p>
+
+  </div>
+
+
+  <div class="info-card">
+
+    الكلمة لن تظهر هنا.
+    مرّر الجهاز إلى المخمّن.
+
+  </div>
+
+
+  <button
+    class="start-button"
+    onclick="finishHandoff()"
+  >
+    ✅ أنا جاهز
+  </button>
+
+</section>
+
+
+<!-- =====================================================
+     شاشة تخمين المستخدم
+===================================================== -->
+
+<section
+  id="game-screen"
+  class="screen"
+>
+
+  <div class="game-header">
+
+    <div>
+      السؤال
+      <strong>
+        <span id="qnum">0</span>/20
+      </strong>
+    </div>
+
+
+    <div>
+      النقاط
+      <strong id="points">100</strong>
+    </div>
+
+  </div>
+
+
+  <div class="screen-title">
+
+    ❓
+
+    <h2>خمّن الكلمة</h2>
+
+    <p id="turn"></p>
+
+  </div>
+
+
+  <div class="input-card">
+
+    <label>السؤال</label>
+
+    <textarea
+      id="question"
+      rows="3"
+      placeholder="هل هي شيء مادي؟"
+    ></textarea>
+
+  </div>
+
+
+  <div
+    id="msg"
+    class="message"
+  ></div>
+
+
+  <div class="game-buttons">
+
+    <button
+      class="ask-button"
+      onclick="ask()"
+    >
+      ❓ طرح السؤال
+    </button>
+
+
+    <button
+      class="guess-button"
+      onclick="showGuess()"
+    >
+      🎯 تخمين
+    </button>
+
+
+    <button
+      class="hint-button"
+      onclick="hint()"
+    >
+      💡 تلميح (-10)
+    </button>
+
+  </div>
+
+
+  <div
+    id="guessbox"
+    class="guess-box hidden"
+  >
+
+    <input
+      id="guess"
+      placeholder="اكتب التخمين"
+    >
+
+
+    <div class="guess-actions">
+
+      <button
+        class="confirm-guess"
+        onclick="confirmGuess()"
+      >
+        ✅ تأكيد
+      </button>
+
+
+      <button
+        class="cancel-guess"
+        onclick="hideGuess()"
+      >
+        إلغاء
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <div class="history">
+
+    <h3>📜 السجل</h3>
+
+    <div id="history">
+      <p>لا توجد أسئلة بعد.</p>
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     شاشة إجابة أسئلة AI
+===================================================== -->
+
+<section
+  id="answer-screen"
+  class="screen"
+>
+
+  <div class="screen-title">
+
+    🗣️
+
+    <h2 id="answer-title">
+      أجب عن السؤال
+    </h2>
+
+    <p id="answer-name"></p>
+
+  </div>
+
+
+  <div class="asked-question">
+
+    <span>السؤال:</span>
+
+    <p id="asked"></p>
+
+  </div>
+
+
+  <div class="answer-buttons">
+
+    <button
+      class="answer-button"
+      onclick="answer('نعم')"
+    >
+      ✅
+      <b>نعم</b>
+    </button>
+
+
+    <button
+      class="answer-button"
+      onclick="answer('لا')"
+    >
+      ❌
+      <b>لا</b>
+    </button>
+
+
+    <button
+      class="answer-button"
+      onclick="answer('قد تكون')"
+    >
+      🤔
+      <b>قد تكون</b>
+    </button>
+
+
+    <button
+      class="answer-button"
+      onclick="answer('لا أعرف')"
+    >
+      ❓
+      <b>لا أعرف</b>
+    </button>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     النتيجة
+===================================================== -->
+
+<section
+  id="result-screen"
+  class="screen"
+>
+
+  <div class="screen-title">
+
+    🏆
+
+    <h2 id="result-title"></h2>
+
+    <p id="result-text"></p>
+
+  </div>
+
+
+  <div class="result-card">
+
+    <div>
+      النقاط
+      <b id="rs">0</b>
+    </div>
+
+    <div>
+      الأسئلة
+      <b id="rq">0</b>
+    </div>
+
+    <div>
+      التلميحات
+      <b id="rh">0</b>
+    </div>
+
+  </div>
+
+
+  <button
+    class="start-button"
+    onclick="next()"
+  >
+    ➡️ متابعة
+  </button>
+
+</section>
+
+
+<!-- =====================================================
+     نتيجة المباراة
+===================================================== -->
+
+<section
+  id="match-result-screen"
+  class="screen"
+>
+
+  <div class="screen-title">
+
+    🏆
+
+    <h2>نهاية المباراة</h2>
+
+    <p id="final"></p>
+
+  </div>
+
+
+  <div
+    id="board"
+    class="scoreboard"
+  ></div>
+
+
+  <button
+    class="start-button"
+    onclick="goHome()"
+  >
+    🏠 الرئيسية
+  </button>
+
+</section>
+
+
+<script src="app.js"></script>
+
+</body>
+  </html>
